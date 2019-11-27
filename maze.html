@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>迷宫</title>
+    <script src="vue.min.js"></script>
+    <link rel="stylesheet" href="maze.css">
+</head>
+<body>
+    <div id="app">
+        <canvas id="can"></canvas>
+        <div id="enter">入口</div>
+        <div id="exit">出口</div>
+        <div id="butt">
+            <button @click="change">随机生成迷宫</button>
+            <button @click="way">生成路径</button>
+        </div>
+    </div>
+</body>
+<script>
+    var Main = {
+        data() {
+            return {
+                /* 迷宫横布局 */
+                maze_hor: [],
+                /* 迷宫竖布局 */
+                maze_col: [],
+                /* 路径 */
+                way_result: []
+            }
+        },
+        mounted: function () {
+            this.change();
+        },
+        methods: {
+            ini() {
+                this.maze_hor = [];
+                this.maze_col = [];
+                for (var i = 0; i < 16; i++) {
+                    var temp = [];
+                    for (var j = 0; j < 17; j++) {
+                        if (j === 0 || j === 16)
+                            temp.push(1);
+                        else
+                            temp.push(0)
+                    }
+                    this.maze_hor.push(temp);
+                }
+                for (var i = 0; i < 17; i++) {
+                    var temp = [];
+                    for (var j = 0; j < 16; j++) {
+                        if (i === 0 || i === 16)
+                            temp.push(1);
+                        else
+                            temp.push(0)
+                    }
+                    this.maze_col.push(temp);
+                }
+            },
+            change() {
+                /* 清除画布 */
+                var c = document.getElementById("can");
+                var ctx = c.getContext("2d");
+                ctx.clearRect(0, 0, c.width, c.height);
+                /* 初始化数组 */
+                this.ini();
+                /* 预留入口出口 */
+                this.maze_col[0][0] = 0;
+                this.maze_col[16][15] = 0;
+
+                var temp1 = Math.floor(Math.random() * 15) + 1;
+                var temp2 = Math.floor(Math.random() * 15) + 1;
+                /* 生成迷宫数组 */
+                this.generate(temp1, 0, 16, temp2, 0, 16);
+                /* 画迷宫 */
+                this.draw();
+            },
+            generate(hor_y, hor_x_l, hor_x_r, col_x, col_y_t, col_y_b) {
+                if (hor_y === col_y_t || hor_y === col_y_b || col_x === hor_x_l || col_x === hor_x_r)
+                    return;
+
+                for (var i = hor_x_l; i < hor_x_r; i++) {
+                    this.maze_hor[i][hor_y] = 1;
+                }
+                for (var i = col_y_t; i < col_y_b; i++) {
+                    this.maze_col[col_x][i] = 1;
+                }
+
+                var tempNum = Math.floor(Math.random() * 4);
+                var tempNum_l = Math.floor(Math.random() * (col_x - hor_x_l)) + 1;
+                var tempNum_r = Math.floor(Math.random() * (hor_x_r - col_x)) + 1;
+                var tempNum_t = Math.floor(Math.random() * (hor_y - col_y_t)) + 1;
+                var tempNum_b = Math.floor(Math.random() * (col_y_b - hor_y)) + 1;
+                if (tempNum === 0) {
+                    this.maze_hor[col_x + tempNum_r - 1][hor_y] = 0;
+                    this.maze_col[col_x][hor_y - tempNum_t] = 0;
+                    this.maze_col[col_x][hor_y + tempNum_b - 1] = 0;
+                }
+                if (tempNum === 1) {
+                    this.maze_hor[col_x - tempNum_l][hor_y] = 0;
+                    this.maze_col[col_x][hor_y - tempNum_t] = 0;
+                    this.maze_col[col_x][hor_y + tempNum_b - 1] = 0;
+                }
+                if (tempNum === 2) {
+                    this.maze_hor[col_x - tempNum_l][hor_y] = 0;
+                    this.maze_hor[col_x + tempNum_r - 1][hor_y] = 0;
+                    this.maze_col[col_x][hor_y + tempNum_b - 1] = 0;
+                }
+                if (tempNum === 3) {
+                    this.maze_hor[col_x - tempNum_l][hor_y] = 0;
+                    this.maze_hor[col_x + tempNum_r - 1][hor_y] = 0;
+                    this.maze_col[col_x][hor_y - tempNum_t] = 0;
+                }
+
+                var temp_t = Math.floor(Math.random() * (hor_y - col_y_t - 1)) + 1;
+                var temp_b = Math.floor(Math.random() * (col_y_b - hor_y - 1)) + 1;
+                var temp_l = Math.floor(Math.random() * (col_x - hor_x_l - 1)) + 1;
+                var temp_r = Math.floor(Math.random() * (hor_x_r - col_x - 1)) + 1;
+                this.generate(hor_y + temp_b, hor_x_l, col_x, col_x - temp_l, hor_y, col_y_b);
+                this.generate(hor_y + temp_b, col_x, hor_x_r, col_x + temp_r, hor_y, col_y_b);
+                this.generate(hor_y - temp_t, hor_x_l, col_x, col_x - temp_l, col_y_t, hor_y);
+                this.generate(hor_y - temp_t, col_x, hor_x_r, col_x + temp_r, col_y_t, hor_y);
+            },
+            draw() {
+                var cell_width = 30;
+                var cell_height = 30;
+                var c = document.getElementById("can");
+                c.width = 480;
+                c.height = 480;
+                var ctx = c.getContext("2d");
+                ctx.lineWidth = 2;
+                for (var i = 0; i < this.maze_hor.length; i++) {
+                    for (var j = 0; j < this.maze_hor.length + 1; j++) {
+                        if (this.maze_hor[i][j] === 1) {
+                            ctx.beginPath();
+                            ctx.moveTo(i * cell_width, j * cell_height);
+                            ctx.lineTo((i + 1) * cell_width, j * cell_height);
+                            ctx.stroke();
+                        }
+                    }
+                }
+                for (var i = 0; i < this.maze_col.length; i++) {
+                    for (var j = 0; j < this.maze_col.length - 1; j++) {
+                        if (this.maze_col[i][j] === 1) {
+                            ctx.beginPath();
+                            ctx.moveTo(i * cell_width, j * cell_height);
+                            ctx.lineTo(i * cell_width, (j + 1) * cell_height);
+                            ctx.stroke();
+                        }
+                    }
+                }
+            },
+            way() {
+                /* 标志节点是否访问过 */
+                var visited = [];
+                for (var i = 0; i < 16; i++) {
+                    var temp = [];
+                    for (var j = 0; j < 16; j++) {
+                        temp.push(0)
+                    }
+                    visited.push(temp)
+                }
+
+                /* 存放x坐标 */
+                var queue_x = [];
+                /* 存放y坐标 */
+                var queue_y = [];
+                /* 存放访问路径 */
+                var queue_way = [];
+
+                queue_x.push(0);
+                queue_y.push(0);
+                var tempArr = [[0], [0]];
+                queue_way.push(tempArr);
+
+                var way_result = [];
+
+                while (queue_x.length > 0 && queue_y.length > 0) {
+                    var x = queue_x.shift();
+                    var y = queue_y.shift();
+                    var temp_way = queue_way.shift();
+
+                    visited[x][y] = 1;
+
+                    if (x === 15 && y === 15) {
+                        way_result = temp_way;
+                        break;
+                    }
+
+                    if (y > 0 && visited[x][y - 1] === 0 && this.maze_hor[x][y] === 0) {
+                        queue_x.push(x);
+                        queue_y.push(y - 1);
+                        var temp2 = [];
+                        for (var m = 0; m < temp_way.length; m++) {
+                            var temp2Arr = [];
+                            for (var n = 0; n < temp_way[m].length; n++) {
+                                temp2Arr.push(temp_way[m][n])
+                            }
+                            temp2.push(temp2Arr)
+                        }
+                        temp2[0].push(x);
+                        temp2[1].push(y - 1);
+                        queue_way.push(temp2);
+                    }
+                    if (y < 15 && visited[x][y + 1] === 0 && this.maze_hor[x][y + 1] === 0) {
+                        queue_x.push(x);
+                        queue_y.push(y + 1);
+                        var temp2 = [];
+                        for (var m = 0; m < temp_way.length; m++) {
+                            var temp2Arr = [];
+                            for (var n = 0; n < temp_way[m].length; n++) {
+                                temp2Arr.push(temp_way[m][n])
+                            }
+                            temp2.push(temp2Arr)
+                        }
+                        temp2[0].push(x);
+                        temp2[1].push(y + 1);
+                        queue_way.push(temp2);
+                    }
+                    if (x > 0 && visited[x - 1][y] === 0 && this.maze_col[x][y] === 0) {
+                        queue_x.push(x - 1);
+                        queue_y.push(y);
+                        var temp2 = [];
+                        for (var m = 0; m < temp_way.length; m++) {
+                            var temp2Arr = [];
+                            for (var n = 0; n < temp_way[m].length; n++) {
+                                temp2Arr.push(temp_way[m][n])
+                            }
+                            temp2.push(temp2Arr)
+                        }
+                        temp2[0].push(x - 1);
+                        temp2[1].push(y);
+                        queue_way.push(temp2);
+                    }
+                    if (x < 15 && visited[x + 1][y] === 0 && this.maze_col[x + 1][y] === 0) {
+                        queue_x.push(x + 1);
+                        queue_y.push(y);
+                        var temp2 = [];
+                        for (var m = 0; m < temp_way.length; m++) {
+                            var temp2Arr = [];
+                            for (var n = 0; n < temp_way[m].length; n++) {
+                                temp2Arr.push(temp_way[m][n])
+                            }
+                            temp2.push(temp2Arr)
+                        }
+                        temp2[0].push(x + 1);
+                        temp2[1].push(y);
+                        queue_way.push(temp2);
+                    }
+                }
+
+                this.way_result = [];
+                for (var i = 0; i < way_result.length; i++) {
+                    var temp3Arr = [];
+                    for (var j = 0; j < way_result[i].length; j++) {
+                        temp3Arr.push(way_result[i][j]);
+                    }
+                    this.way_result.push(temp3Arr);
+                }
+                this.draw_way();
+            },
+            draw_way() {
+                var cell_width = 30;
+                var cell_height = 30;
+
+                var c = document.getElementById("can");
+                var ctx = c.getContext("2d");
+                ctx.lineWidth = 5;
+                ctx.lineJoin = "round";
+                ctx.strokeStyle = "#FF0000";
+                ctx.beginPath();
+                ctx.moveTo(0, cell_height / 2);
+
+                for (var i = 0; i < this.way_result[0].length; i++) {
+                    ctx.lineTo(this.way_result[0][i] * cell_width + cell_width / 2, this.way_result[1][i] * cell_height + cell_height / 2);
+                }
+
+                ctx.lineTo(16 * cell_width, 15.5 * cell_height);
+                ctx.stroke();
+            }
+        }
+    };
+    var Ctor = Vue.extend(Main);
+    new Ctor().$mount('#app')
+</script>
+</html>
