@@ -18,9 +18,10 @@
 	程序使用html和JavaScript完成，JavaScript采用vue.js进行写，采用canvas画布进行生成迷宫和路径。	
 ### 界面截图
  - 初始界面
-
+	![迷宫](picture/1.png)
  - 点击生成路径的按钮后的界面
- 
+ 	![迷宫](picture/2.png)
  - 点击随机生成迷宫按钮后，会再生成一个迷宫
+ 	![迷宫](picture/3.png)
  
 
